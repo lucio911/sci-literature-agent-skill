@@ -10,3 +10,7 @@ This repository is a conservative research-citation assistant. Changes that impr
 6. Treat publisher templates and generated Zotero Better BibTeX exports as user-owned input. Avoid destructive rewrites.
 
 The license is MIT; this project does not include or redistribute the Paper Search MCP package.
+
+## Cross-agent maintenance
+
+Keep `skills/sci-literature/` as the only canonical current skill; do not fork scientific rules separately for each host. Keep installers and optional MCP setup instructions synchronized with official platform documentation. Test approval and non-approval behavior before release.

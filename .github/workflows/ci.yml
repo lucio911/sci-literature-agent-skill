@@ -22,4 +22,7 @@ jobs:
       - name: Test citation scripts (offline)
         run: python -X utf8 -m unittest discover -s tests -v
       - name: Check CLI parser (offline)
-        run: python -X utf8 skill/scripts/sci_refs.py --help
+        run: python -X utf8 skills/sci-literature/scripts/sci_refs.py --help
+
+      - name: Test cross-agent installation (offline)
+        run: python -X utf8 -m unittest discover -s tests -p test_portability.py -v

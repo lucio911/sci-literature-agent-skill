@@ -1,163 +1,117 @@
-# SCI Literature Assistant for Windows Codex (LaTeX + BibTeX)
+# SCI Literature — Universal Agent Skill for LaTeX & BibTeX
 
-A usable, conservative Codex Skill with Python DOI/bibliography helpers and a compatible Paper Search MCP setup. **Not an MCP server itself**: the skill reads MCP search results through Codex and invokes its own scripts for deterministic changes.
+**One Agent Skill for Codex, Claude Code, WorkBuddy/CodeBuddy, Gemini CLI, OpenCode, and compatible AI agents.**
 
-## Contents
+A conservative academic reference workflow that searches papers, verifies DOI metadata, maps evidence to claims, safely updates `.bib` and `.tex`, and audits citation integrity. Uses the open [Agent Skills specification](https://agentskills.io/specification). An optional [Paper Search MCP](https://github.com/openags/paper-search-mcp) increases discovery coverage; the skill does **not** implement its own MCP server.
+
+[中文跨平台安装指南](docs/PLATFORMS.zh-CN.md) · [完整使用指南](docs/QUICKSTART.zh-CN.md) · [Skill](skills/sci-literature/SKILL.md) · [质量门槛](skills/sci-literature/references/QUALITY-GATES.md)
+
+## Supported hosts
+
+| Host | Per-user skill directory | Project-local skill directory |
+|---|---|---|
+| OpenAI Codex | `~/.agents/skills/sci-literature/` | `.agents/skills/sci-literature/` |
+| Anthropic Claude Code | `~/.claude/skills/sci-literature/` | `.claude/skills/sci-literature/` |
+| Tencent WorkBuddy / CodeBuddy | `~/.codebuddy/skills/sci-literature/` | `.codebuddy/skills/sci-literature/` |
+| Gemini CLI | `~/.gemini/skills/sci-literature/` | `.gemini/skills/sci-literature/` |
+| OpenCode | `~/.config/opencode/skills/sci-literature/` | `.opencode/skills/sci-literature/` |
+| Other Agent Skills hosts | Import `skills/sci-literature/` | Host-specific |
+
+WorkBuddy editions with a skill-upload interface can import the standalone Skill ZIP, subject to their local execution permissions. Platform support varies by version.
+
+## Quick installation
+
+Requires Python **3.10+**. For PowerShell on Windows:
+
+```powershell
+git clone https://github.com/lucio911/sci-literature-codex.git
+cd sci-literature-codex
+.\install.ps1 -Agent All -Scope User
+```
+
+To add Paper Search MCP where supported (optional; requires `uvx`):
+
+```powershell
+.\install.ps1 -Agent All -Scope User -InstallMcp -Force
+```
+
+For Linux/macOS/Windows via Python:
+
+```bash
+python scripts/install_skill.py --agent all --scope user
+python scripts/install_skill.py --agent claude --scope project --project-root /path/to/manuscript
+```
+
+The installer only copies the canonical Skill to host directories. Gemini CLI and OpenCode additionally discover certain shared `.agents/skills` paths, so choose one preferred copy if duplicate names are displayed. It never installs arbitrary dependencies or changes MCP configuration unless you explicitly pass `-InstallMcp` to the PowerShell installer or run `scripts/configure_mcp.py --apply`. For a different Agent Skills host, pass `--target-dir /path/to/skills/sci-literature` to the Python installer. If a skill already exists, supply `-Force` / `--force`; an existing copy is **backed up** before replacement.
+
+## Usage examples
+
+**Codex:** `$sci-literature Find verified sources for the introduction; propose a plan and show me the diff before editing.`
+
+**Claude Code:** `/sci-literature Review these literature claims and verify DOI metadata; prepare approved-only LaTeX citations.`
+
+**WorkBuddy:** `使用 sci-literature 技能，检索相关论文并核验 DOI，先提供引用证据和改动预览，未经批准不要修改 .tex。`
+
+**Direct Python, no agent required:**
+
+```bash
+python skills/sci-literature/scripts/sci_refs.py search "XFEM tunnel lining surcharge" --since 2021-01-01 --limit 15 --out literature/candidates.json
+python skills/sci-literature/scripts/sci_refs.py audit --root . --bib references.bib --out literature/citation-audit.json
+```
+
+For DOI import, metadata validation, evidence plans, dry-run and approved-only insertion, see [the Chinese guide](docs/QUICKSTART.zh-CN.md) and [SKILL.md](skills/sci-literature/SKILL.md).
+
+## Architecture
 
 ```text
 sci-literature-codex/
-├── README.md
-├── .github/workflows/ci.yml
-├── .gitignore
-├── LICENSE
-├── publish.ps1
-├── docs/QUICKSTART.zh-CN.md
-├── install.ps1
-├── AGENTS.snippet.md
-├── skill/
-│   ├── SKILL.md
-│   ├── assets/plan.template.json
-│   ├── references/QUALITY-GATES.md
-│   └── scripts/sci_refs.py
+├── skills/
+│   └── sci-literature/
+│       ├── SKILL.md                   # Vendor-neutral instructions
+│       ├── scripts/sci_refs.py        # Deterministic bibliographic operations
+│       ├── references/QUALITY-GATES.md
+│       └── assets/plan.template.json
+├── scripts/
+│   ├── install_skill.py               # Platform-agnostic installer
+│   └── configure_mcp.py               # Optional MCP setup helper
+├── install.ps1                        # Windows wrapper, backwards-compatible flags
+├── docs/
+│   ├── PLATFORMS.zh-CN.md
+│   └── QUICKSTART.zh-CN.md
 ├── examples/plan.template.json
-└── tests/test_sci_refs.py
+└── tests/
 ```
 
-[中文快速入门](docs/QUICKSTART.zh-CN.md) · [完整 Skill](skill/SKILL.md) · [引用质量检查](skill/references/QUALITY-GATES.md) · [测试](tests/test_sci_refs.py)
+**One canonical Skill source**, copied into each host's appropriate location. No vendor-specific science logic, no separate copies to maintain.
 
-## Prerequisites (Windows)
+## What it checks
 
-- Codex CLI (or Codex IDE extension sharing CLI config). Check `codex --version`.
-- Python 3.10+ on `PATH`. Check `python --version`.
-- [uv](https://docs.astral.sh/uv/getting-started/installation/) to run the search MCP. Check `uvx --version`.
-- TeX Live / MiKTeX and `latexmk` for local compilation (recommended, not needed for search/import/audit).
-- Access to Crossref and academic services. HTTP/Proxy/firewall restrictions can prevent remote requests.
+1. Discovers candidates using Paper Search MCP if available, with Crossref metadata search as fallback.
+2. Verifies DOI/title/year and checks duplicate bibliography records.
+3. Requires direct evidence and a source locator per proposed citation; metadata alone is insufficient.
+4. Generates a proposal and previews a diff before insertion; only the user can approve manuscript edits.
+5. Preserves existing TeX and BibTeX formatting outside approved changes, and creates backups.
+6. Audits unresolved citation keys, duplicate DOIs, bibliography mismatches, and unused records.
 
-## Publishing your own copy
+No claims of SCI/SCIE indexing, full-text reading, source validity, or successful compilation are made without actual verification.
 
-For the repository owner, the optional `publish.ps1` script can create a standalone GitHub repository and push `main` using the authenticated GitHub CLI (`gh auth login` required). Confirm the destination and visibility before executing. The script does not publish automatically during installation.
+## Tests
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\publish.ps1 -Repo lucio911/sci-literature-codex -Visibility public
+```bash
+python -m unittest discover -s tests -v
+python scripts/install_skill.py --agent all --scope user --dry-run
 ```
 
-## Installation
+Test coverage includes citation safety checks and host-installation behavior. CI runs on Windows and Ubuntu. Real MCP connectivity and publisher-template compilation require integration testing in your own host environment.
 
-1. Extract the release ZIP (do not execute code from an untrusted archive without checking it).
-2. Open PowerShell inside the extracted `sci-literature-codex` directory.
-3. Install for all projects:
+## Security and compatibility
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Scope User -InstallMcp
-```
+- `Python 3.10+` standard library only for local scripts; the external `paper-search-mcp` has its own requirements.
+- Never check in API keys, OAuth tokens, local `.env` files, user manuscripts, or downloads.
+- WorkBuddy `mcp.json` changes are additive and backed up; existing MCP definitions are not overwritten.
+- `-InstallMcp` requests execution of an external upstream MCP package. Review upstream code before opting in.
+- The initial v1.0 release was Codex-only; v1.1 reorganizes the Skill under `skills/sci-literature/` for cross-agent distribution. The existing GitHub URL remains unchanged.
 
-Or install into one project without configuring MCP:
+## License
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1 -Scope Project -ProjectRoot 'D:\papers\shield-tunnel'
-```
-
-4. Alternatively configure MCP separately:
-
-```powershell
-codex mcp add paper-search -- uvx paper-search-mcp
-codex mcp list
-```
-
-If a `paper-search` server is already registered, inspect it rather than overwriting it.
-
-**Manual MCP TOML alternative**: Add only this table (do not delete other entries) to `%USERPROFILE%\.codex\config.toml`:
-
-```toml
-[mcp_servers.paper-search]
-command = "uvx"
-args = ["paper-search-mcp"]
-startup_timeout_sec = 60
-```
-
-Optional API keys are managed by the MCP project in `%USERPROFILE%\.config\paper-search-mcp\.env` (normal `~/.config/paper-search-mcp/.env` layout), not by this repo. See the upstream `.env.example`. No keys are required for basic Crossref search. Avoid committing credentials. If `uvx` executable is not on PATH when Codex launches, supply the full path in TOML.
-
-For `sci_refs.py`'s polite Crossref access, optionally set `CROSSREF_MAILTO` in your user environment to a valid contact email.
-
-5. Restart Codex if necessary, then use `$sci-literature` or `/skills` to invoke the skill.
-
-## Typical commands in the LaTeX repository
-
-Set the script location once (user-global installation):
-
-```powershell
-$skillScript = Join-Path $HOME '.agents\skills\sci-literature\scripts\sci_refs.py'
-cd 'D:\papers\shield-tunnel'  # replace with your actual path
-```
-
-Search with MCP inside Codex: use `$sci-literature` and request keyword searches. Or Crossref metadata fallback:
-
-```powershell
-python -X utf8 $skillScript search 'XFEM pre-existing radial crack shield tunnel surcharge' --since 2021-01-01 --limit 15 --out literature/candidates.json
-```
-
-After **checking the actual paper and its DOI**, import by replacing the placeholder:
-
-```powershell
-python -X utf8 $skillScript import --doi '10.REAL_DOI/REPLACE_ME' --bib references.bib --ledger literature/doi-ledger.json
-python -X utf8 $skillScript verify --bib references.bib --ledger literature/doi-ledger.json --out literature/verification.json
-```
-
-Prepare `literature/citation-plan.json` from the installed Skill `assets/plan.template.json` or the distribution `examples/plan.template.json`. Use verified citation keys and actual claim evidence. The plan defaults to `approved=false`. Review the evidence and approve individual insertions before marking them true.
-
-```powershell
-# Preview changes; no write
-python -X utf8 $skillScript insert --root . --bib references.bib --ledger literature/doi-ledger.json --plan literature/citation-plan.json
-# Explicitly apply approved changes only, after checking the diff
-python -X utf8 $skillScript insert --root . --bib references.bib --ledger literature/doi-ledger.json --plan literature/citation-plan.json --apply
-# Audit cited and bibliography keys (offline)
-python -X utf8 $skillScript audit --root . --bib references.bib --out literature/citation-audit.json
-```
-
-For multiple `.bib` resources, repeat `--bib` for `audit`. `insert` currently validates against **one** `.bib` at a time; choose the file holding the cited entries.
-
-## LaTeX compilation examples
-
-- `natbib` or journal-provided BibTeX templates: compile using journal-prescribed sequence, often `latexmk -pdf main.tex` (automatic bibliography backend handling depends on template/config).
-- `biblatex` + `biber`: `latexmk -pdf main.tex` when configured with `backend=biber`; otherwise run `pdflatex main.tex; biber main; pdflatex main.tex; pdflatex main.tex`.
-- Never force `biblatex` into an existing Elsevier journal class. Honor the manuscript's own class and bibliography rules.
-
-## How safe insertion works
-
-- The insertion plan needs a real BibTeX key, Crossref DOI status `metadata_verified` in the ledger, and a separate actual evidence record per citation (`abstract` or `full_text`, `direct` relation, locator, finding).
-- The source anchor must be a unique exact string in the active text of one `.tex` file; comments and `verbatim`/`lstlisting`/`minted`/`comment` environments are masked. Complicated custom macros require manual review.
-- Default `insert` is read-only dry-run. Approved `--apply` creates `.tex.bak.YYYYMMDD-HHMMSS` backups.
-- Existing `.bib` text is left untouched unless adding a DOI. The scanner is a practical subset of BibTeX and may need manual checks with `@string`, concatenation, and custom citation macros.
-- All references still need scholarly evaluation. Crossref is not an SCIE indexing database and is not a conclusive retraction registry.
-
-## Self-test
-
-```powershell
-python -X utf8 -m unittest discover -s .\tests -v
-```
-
-Tests do not require network. Live MCP startup, source API availability, indexing status and TeX compilation against a particular publisher template must be verified on your own environment.
-
-## Troubleshooting
-
-- `uvx not found`: install uv and reopen PowerShell/IDE to refresh PATH.
-- `paper-search MCP unavailable`: run `codex mcp list`; check `~/.codex/config.toml` and restart Codex. Use a full `uvx.exe` path if necessary.
-- HTTP 429/503: follow provider rate limits; set optional API keys where officially available; do not retry aggressively.
-- `metadata_mismatch`: inspect the Crossref record and bibliography carefully, especially titles, versions and corrections. Stop automatic citation insertion for that key.
-- `anchor must ... exactly once`: use a unique exact full sentence from active TeX; do not force a global replace.
-- `Missing citation key`: import the verified DOI into the specified bibliography or correct the citation key.
-- `Unicode` issues: consider a LuaLaTeX/XeLaTeX + Biber toolchain if the journal permits; for BibTeX/Natbib, transliterate or escape problematic names manually.
-
-## Project notes and boundaries
-
-- No fabricated citations, unsupported extrapolation, SCI indexing promises or automatic publication eligibility claims.
-- `verify` checks DOI, title and publication year; it does not automatically verify that two studies have equivalent experimental conditions.
-- If using Zotero Better BibTeX automatic exports, add a separate `codex-added.bib` or import into Zotero first instead of editing the generated export directly.
-
-## References
-
-- Codex skills: https://developers.openai.com/codex/skills
-- Codex configuration: https://developers.openai.com/codex/config-basic
-- Paper Search MCP: https://github.com/openags/paper-search-mcp
-- Crossref REST API: https://api.crossref.org/
-- Zotero Better BibTeX automatic export: https://retorque.re/zotero-better-bibtex/preferences/automatic-export/index.html
+MIT. See [LICENSE](LICENSE).

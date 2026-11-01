@@ -1,9 +1,13 @@
 ---
 name: sci-literature
+license: MIT
+compatibility: Python 3.10+ and filesystem access; Paper Search MCP optional.
+metadata:
+  version: "1.1.0"
 description: Search and verify academic literature for SCI/engineering manuscripts, check DOI and claim-level evidence, maintain LaTeX .bib references, propose and safely insert citations into .tex, and audit citation integrity. Use for literature reviews, references, DOI checking, related work, and reviewer-driven citation revision.
 ---
 
-# SCI Literature Assistant — Codex / LaTeX
+# SCI Literature — Portable Agent Skill / LaTeX
 
 Use this skill for literature discovery, bibliographic import, evidence-based citation insertion, and manuscript citation audits in LaTeX projects. This is a **conservative, evidence-gated workflow**, not an automatic citation generator.
 
@@ -11,7 +15,7 @@ Use this skill for literature discovery, bibliographic import, evidence-based ci
 
 - Python 3.10+; the bundled `scripts/sci_refs.py` uses only Python standard library.
 - The project has `.tex` and `.bib` files. Determine the actual main file, `\bibliography{...}` / `\addbibresource{...}`, and its citation scheme before editing.
-- Preferred MCP server: **paper-search** (`uvx paper-search-mcp`), installed and separately configured in Codex. Check active MCP tools, do not assume it is running.
+- Preferred MCP server: **paper-search** (`uvx paper-search-mcp`), installed and separately configured in any compatible AI agent. Check active MCP tools, do not assume it is running.
 - If MCP is unavailable, `python scripts/sci_refs.py search` can search **Crossref only**; this fallback is for bibliographic discovery, not a replacement for multi-database evidence retrieval.
 - Use lawfully accessible full texts only; do not bypass paywalls or use a Sci-Hub fallback. If a source cannot be read, label its evidence status honestly.
 
@@ -45,7 +49,7 @@ Before running any commands, locate this skill folder on disk and set `$skillScr
 - Optional Crossref metadata-only fallback:
 
 ```powershell
-python -X utf8 "$HOME\.agents\skills\sci-literature\scripts\sci_refs.py" search 'pre-cracked shield tunnel lining surcharge XFEM' --since 2021-01-01 --limit 15 --out literature/candidates.json
+python -X utf8 "<SKILL_DIR>/scripts/sci_refs.py" search 'pre-cracked shield tunnel lining surcharge XFEM' --since 2021-01-01 --limit 15 --out literature/candidates.json
 ```
 
 In a project-scoped installation, use that project's `.agents\skills\sci-literature\scripts\sci_refs.py` instead of `$HOME`.
@@ -69,7 +73,7 @@ python -X utf8 $skillScript verify --bib references.bib --ledger literature/doi-
 ```
 
 - Investigate mismatched titles, years, DOI resolutions, preprint/version differences, corrigenda/retractions and journal records. Crossref is not sufficient for definitive retraction checks.
-- If the bibliography is auto-exported from Zotero Better BibTeX, **do not edit the auto-generated export in place**. Use a separate `codex-added.bib` file or import records into Zotero, then re-export; update manuscript bibliography resources as approved.
+- If the bibliography is auto-exported from Zotero Better BibTeX, **do not edit the auto-generated export in place**. Use a separate `the host agent-added.bib` file or import records into Zotero, then re-export; update manuscript bibliography resources as approved.
 
 ## Step 4 — Prepare claim-level evidence and plan
 
@@ -115,3 +119,7 @@ python -X utf8 $skillScript audit --root . --bib references.bib --out literature
 4. Offline citation audit and actual build warnings, including everything not verified.
 
 If a DOI is missing or metadata disagrees, stop on the affected citation and report the issue instead of fabricating a replacement. If the user requests research recommendations without a local project, produce the evidence table and no file edits.
+
+## Portability across agents
+
+This Skill follows the Agent Skills `SKILL.md` convention. It is installed through the same canonical directory into Codex (`.agents/skills`), Claude Code (`.claude/skills`), WorkBuddy/CodeBuddy (`.codebuddy/skills`), Gemini CLI (`.gemini/skills`), or OpenCode (`.opencode/skills`). Resolve `scripts/sci_refs.py` relative to the installed SKILL.md directory. MCP discovery is optional and must be configured separately. Do not assume the host has specific tools. For unsupported agents, use standard Python and a compatible Agent Skills directory. Never modify manuscripts without approved citation plans.

@@ -52,4 +52,4 @@ python -X utf8 $script audit --root . --bib references.bib --out literature/cita
 
 > 使用 `$sci-literature` 检查当前 LaTeX 论文引言中需要文献支持的论点，搜索近五年相关同行评审论文及必要的经典研究。先核对 DOI 和研究工况，再从真实摘要/全文建立论点—证据表。只输出引用计划与 dry-run diff，不要直接修改 .tex 或 .bib 中既有内容。等待我确认后才能执行引用插入，并运行审计和期刊模板编译。
 
-详细安装与边界见 [README.md](../README.md) 和 [SKILL.md](../skill/SKILL.md)。
+详细安装与边界见 [README.md](../README.md) 和 [SKILL.md](../skills/sci-literature/SKILL.md)。

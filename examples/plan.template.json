@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "proposals": [
+    {
+      "file": "sections/introduction.tex",
+      "anchor": "COPY AN EXACT COMPLETE CLAIM SENTENCE FROM YOUR TEX FILE.",
+      "keys": ["REAL_KEY_ALREADY_PRESENT_IN_BIB"],
+      "cite_command": "cite",
+      "placement": "before_punctuation",
+      "approved": false,
+      "evidence": [
+        {
+          "key": "REAL_KEY_ALREADY_PRESENT_IN_BIB",
+          "doi": "REPLACE_WITH_REAL_VERIFIED_DOI",
+          "basis": "full_text",
+          "locator": "REPLACE_WITH_ACTUAL_SECTION_PAGE_OR_FIGURE",
+          "support": "direct",
+          "finding": "REPLACE WITH AN ACCURATE EVIDENCE SUMMARY FROM THE SOURCE"
+        }
+      ]
+    }
+  ]
+}
